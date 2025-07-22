@@ -3,7 +3,7 @@ const router = express.Router();
 
 // Middlewares*
 const {authMiddleware} = require('../Middleware/validation');
-// const uploadservice = require('../services/uploadservice'); //feature 4: file upload*
+const uploadservice = require('../services/uploadservice'); //feature 4: file upload*
 
 // Controllers*
 const {signup,login,requestPasswordReset,resetPassword} = require('../Controller/Authcontroller');
@@ -19,7 +19,7 @@ router.post('/request-password-reset', requestPasswordReset); //feature 3: passw
 router.post('/reset-password', resetPassword); //feature 3: password reset*
 
 // 📝 Blog Routes*
-router.post('/addblog', authMiddleware, addblog); //feature 4: with image upload*
+router.post('/addblog', authMiddleware, uploadservice.upload.single('featuredImage'), addblog); //feature 4: with image upload*
 router.put('/updateblog/:id', authMiddleware, updateblog);
 router.post('/deleteblog/:id', authMiddleware, deleteblog);
 router.get('/getallblogs', getallblogs); //feature 1: with search and filtering*
