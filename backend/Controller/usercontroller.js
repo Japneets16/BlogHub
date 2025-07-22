@@ -1,7 +1,7 @@
 const Usermodel = require("../models/user");
 const blogmodel = require("../models/blog");
 const z = require("zod");
-const uploadservice = require("../services/uploadservice"); //feature 4: file upload*
+// const uploadservice = require("../services/uploadservice"); //feature 4: file upload*
 
 // feature 2: get user profile*
 const getUserProfile = async(req,res) => {
@@ -74,10 +74,10 @@ const updateUserProfile = async(req,res) => {
         
         // feature 4: handle profile picture upload*
         let profilePictureUrl = null;
-        if(req.file){
-            const uploadResult = await uploadservice.uploadToCloudinary(req.file.buffer, 'profile-pictures');
-            profilePictureUrl = uploadResult.secure_url;
-        }
+        // if(req.file){
+        //     const uploadResult = await uploadservice.uploadToCloudinary(req.file.buffer, 'profile-pictures');
+        //     profilePictureUrl = uploadResult.secure_url;
+        // }
         
         // update user profile*
         const updateData = { ...checkparse.data };

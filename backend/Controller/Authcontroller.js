@@ -2,7 +2,7 @@ const Usermodel = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const z = require("zod");
-const emailservice = require("../services/emailservice"); //feature 3: email integration*
+// const emailservice = require("../services/emailservice"); //feature 3: email integration*
 
 const signup = async (req, res) => {
   const body = req.body;
@@ -45,7 +45,7 @@ const signup = async (req, res) => {
     await newuser.save();
 
     // feature 3: send welcome email*
-    await emailservice.sendWelcomeEmail(email, name);
+    // await emailservice.sendWelcomeEmail(email, name);
 
     // jwtverification*
     const secretkey = "jpsingh";
@@ -181,7 +181,7 @@ const requestPasswordReset = async (req, res) => {
     await user.save();
 
     // send reset email*
-    await emailservice.sendPasswordResetEmail(email, resetToken);
+    // await emailservice.sendPasswordResetEmail(email, resetToken);
 
     return res.status(200).json({
       message: "Password reset email sent successfully",
