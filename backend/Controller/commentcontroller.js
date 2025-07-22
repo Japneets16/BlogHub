@@ -1,4 +1,5 @@
 const commentmodel = require("../models/comment");
+const blogmodel = require("../models/blog"); //import blog model*
 
 //to add the comments 
 const addcomment = async(req,res)=>{
@@ -17,7 +18,7 @@ const addcomment = async(req,res)=>{
 
         const newcomment = new commentmodel({
             comment:body.comment,
-            author:req.user._id,
+            author:req.user.id,
             blog:blogid,
             createdAt: new Date(),
         })
@@ -55,11 +56,11 @@ const editcomment = async(req,res)=>{
             })
         }
     
-        //check if the comment belongs to the user who made the request
-        if(findcomment.author.toString()!== req.user._id.toString()){
+        //check if the comment belongs to the user who made the request*
+        if(findcomment.author.toString()!== req.user.id.toString()){
             return res.status(403).json({
                 message:"unauthorized user is there to edit this comment",
-            })
+            });
         }
     
         findcomment.comment = body.comment;

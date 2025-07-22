@@ -14,6 +14,7 @@ const userschema = new mongoose.Schema({
         type: String,
         required: true
     },
+    // feature 2: user profile fields*
     bio: {
         type: String,
         maxlength: 500
@@ -28,6 +29,7 @@ const userschema = new mongoose.Schema({
     location: {
         type: String
     },
+    // feature 2: follow system*
     followers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -36,6 +38,7 @@ const userschema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
+    // feature 3: email verification*
     isVerified: {
         type: Boolean,
         default: false
@@ -49,25 +52,15 @@ const userschema = new mongoose.Schema({
     resetPasswordExpires: {
         type: Date
     },
+    // feature 9: bookmarks*
+    bookmarks: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'blogs'
+    }],
     createdAt: {
         type: Date,
         default: Date.now
-    },
-    lastLogin: {
-        type: Date
     }
-}, {
-    timestamps: true
-});
-
-// Virtual for follower count
-userschema.virtual('followerCount').get(function() {
-    return this.followers.length;
-});
-
-// Virtual for following count
-userschema.virtual('followingCount').get(function() {
-    return this.following.length;
 });
 
 const Usermodel = mongoose.model('User', userschema);

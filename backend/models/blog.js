@@ -4,21 +4,17 @@ const blogSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    maxlength: 200
   },
   content: {
     type: String,
-    required: true
-  },
-  summary: {
-    type: String,
-    maxlength: 300
+    required: true,
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "User", //means that take the user id from the user collection*
     required: true,
   },
+  // feature 8: category management*
   category: {
     type: String,
     enum: ['Technology', 'Health', 'Travel', 'Food', 'Lifestyle', 'Business', 'Education', 'Entertainment', 'Sports', 'Other'],
@@ -26,97 +22,30 @@ const blogSchema = new mongoose.Schema({
   },
   tags: {
     type: [String],
-    validate: [arrayLimit, '{PATH} exceeds the limit of 10']
   },
+  // feature 4: file upload system for featured images*
   featuredImage: {
     type: String,
     default: null
   },
-  readingTime: {
-    type: Number, // in minutes
-    default: 1
-  },
+  // feature 5: analytics - views tracking*
   views: {
     type: Number,
     default: 0
   },
-  viewedBy: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    },
-    viewedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  //in the likes  requrie the userid to check the users who has likes it*
   likes: {
     type: [mongoose.Schema.Types.ObjectId],
     ref: "User",
     default: [],
   },
-  bookmarkedBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-  }],
-  isPublished: {
-    type: Boolean,
-    default: true
-  },
-  publishedAt: {
-    type: Date,
-    default: Date.now
-  },
-  lastModified: {
-    type: Date,
-    default: Date.now
-  },
-  slug: {
-    type: String,
-    unique: true
-  }
-}, {
-  timestamps: true
 });
 
-// Custom validator for tags array length
-function arrayLimit(val) {
-  return val.length <= 10;
-}
-
-// Virtual for like count
-blogSchema.virtual('likeCount').get(function() {
-  return this.likes.length;
-});
-
-// Virtual for comment count (will be calculated separately)
-blogSchema.virtual('commentCount', {
-  ref: 'comments',
-  localField: '_id',
-  foreignField: 'blog',
-  count: true
-});
-
-// Pre-save middleware to generate slug and calculate reading time
-blogSchema.pre('save', function(next) {
-  if (this.isModified('title')) {
-    this.slug = this.title.toLowerCase()
-      .replace(/[^\w ]+/g, '')
-      .replace(/ +/g, '-')
-      .substring(0, 50);
-  }
-  
-  if (this.isModified('content')) {
-    // Calculate reading time (average 200 words per minute)
-    const wordCount = this.content.split(/\s+/).length;
-    this.readingTime = Math.ceil(wordCount / 200);
-    this.lastModified = new Date();
-  }
-  
-  next();
-});
-
-// Create text index for search
+// feature 1: create text index for advanced search*
 blogSchema.index({ 
   title: 'text', 
   content: 'text', 
