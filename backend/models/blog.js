@@ -3,44 +3,43 @@ const mongoose = require("mongoose");
 const blogSchema = new mongoose.Schema({
   title: {
     type: String,
-
     required: true,
   },
-
   content: {
     type: String,
-
     required: true,
   },
-
   author: {
     type: mongoose.Schema.Types.ObjectId,
-
-    ref: "User", //means that take the user id from the user collection*
-
+    ref: "User",
     required: true,
   },
-
   tags: {
     type: [String],
   },
-
   createdAt: {
     type: Date,
-
     default: Date.now,
   },
-
-  //in the likes  requrie the userid to check the users who has likes it*
-
+  // Image upload (file path or URL)
+  image: {
+    type: String,
+  },
+  // Blog analytics: view count
+  views: {
+    type: Number,
+    default: 0,
+  },
+  // Likes: array of user IDs
   likes: {
     type: [mongoose.Schema.Types.ObjectId],
-
     ref: "User",
-
     default: [],
   },
 });
+
+// Full-text search index
+blogSchema.index({ title: 'text', content: 'text' });
 
 const blogmodel = mongoose.model("blogs", blogSchema);
 

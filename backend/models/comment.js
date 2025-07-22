@@ -7,7 +7,7 @@ const commentschema = new mongoose.Schema({
     },
     author:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:"User",                               //this is the collection name 
+        ref:"User",
         required: true
     },
     blog:{
@@ -18,6 +18,17 @@ const commentschema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    // For nested comments
+    parentComment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'comments',
+        default: null
+    },
+    // For moderation (admin can hide)
+    isHidden: {
+        type: Boolean,
+        default: false
     }
 });
 

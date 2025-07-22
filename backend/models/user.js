@@ -13,8 +13,17 @@ const userschema  = new mongoose.Schema({
     password:{
         type:String,
         required:true
-
-    }
+    },
+    // Role-based access: user, editor, admin
+    role: {
+        type: String,
+        enum: ['user', 'editor', 'admin'],
+        default: 'user',
+    },
+    // In-app notifications (simple string array for demo)
+    notifications: [{
+        type: String
+    }]
 });
 
 const Usermodel = mongoose.model('User',userschema);

@@ -1,16 +1,16 @@
 const blogmodel = require("../models/blog");
 const z = require("zod");
+const path = require("path");
 
+// Add blog (supports Markdown/HTML, image upload)
 const addblog = async (req, res) => {
   try {
     const body = req.body;
-
     const validate = z.object({
       title: z.string().min(1, "Title should be at least 1 character long"),
       content: z.string().min(1, "Content should be at least 1 character long"),
       tags: z.array(z.string()).optional(),
     });
-
     const checkparse = validate.safeParse(body);
     if (!checkparse.success) {
       return res.status(400).json({
@@ -18,23 +18,22 @@ const addblog = async (req, res) => {
         checkparse: checkparse.error.errors,
       });
     }
-
     const { title, content, tags } = checkparse.data;
-
-    // add the new blog
+    // Handle image upload (if any)
+    let imagePath = null;
+    if (req.file) {
+      imagePath = path.join("/uploads", req.file.filename);
+    }
     const newblog = new blogmodel({
       title,
-      content,
-      author: req.user.id, // assuming user id is stored in req.user._id
+      content, // Markdown/HTML supported
+      author: req.user._id,
       tags: tags || [],
       createdAt: new Date(),
+      image: imagePath
     });
-
     await newblog.save();
-    //populate the user field with the blog id
-    //this will take the author details and add it to the blog with the name of the user
     await newblog.populate("author", "name");
-
     return res.status(200).json({
       message: "blog added successfully",
       blog: newblog,
@@ -47,19 +46,16 @@ const addblog = async (req, res) => {
   }
 };
 
-// update he blog
-
+// Update blog
 const updateblog = async (req, res) => {
   try {
     const body = req.body;
     const blogid = req.params.id;
-
     const validate = z.object({
       title: z.string().min(1, "Title should be at least 1 character long"),
       content: z.string().min(1, "Content should be at least 1 character long"),
       tags: z.array(z.string()).optional(),
     });
-
     const checkparse = validate.safeParse(body);
     if (!checkparse.success) {
       return res.status(400).json({
@@ -67,24 +63,20 @@ const updateblog = async (req, res) => {
         checkparse: checkparse.error.errors,
       });
     }
-
     const { title, content, tags } = checkparse.data;
-    // find the blog with the given id
-
+    let updateData = { title, content, tags };
+    if (req.file) {
+      updateData.image = path.join("/uploads", req.file.filename);
+    }
     const find = await blogmodel.findByIdAndUpdate(
         blogid,
-      checkparse.data,
+      updateData,
       { new: true }
     );
-
     if (!find) {
-      return res.status(404).json({
-        message: "Blog not found",
-      });
+      return res.status(404).json({ message: "Blog not found" });
     }
-    //populate the user field with the blog id
     await find.populate("author", "name");
-
     return res.status(200).json({
       message: "Blog updated successfully",
       blog: find
@@ -97,66 +89,65 @@ const updateblog = async (req, res) => {
   }
 };
 
-
-//delete the blog 
+// Delete blog (admin or author)
 const deleteblog= async(req,res)=>{
     try{
         const blogid = req.params.id;
-        //find the blog with the given id 
-        const find  = await blogmodel.findIdAndDelete(blogid);
+        const find  = await blogmodel.findById(blogid);
         if(!find){
-            return res.status(404).json({
-                message:"blog not found"
-            })
+            return res.status(404).json({ message:"blog not found" });
         }
-
-        return res.status(200).json({
-            message:"Blog deleted successfully"
-        })
+        // Only author or admin can delete
+        if (find.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+        await blogmodel.findByIdAndDelete(blogid);
+        return res.status(200).json({ message:"Blog deleted successfully" });
     }catch(err){
-        res.status(500).json({
-            message:"Error while deleting blog",
-            err:err.message
-        })
+        res.status(500).json({ message:"Error while deleting blog", err:err.message });
     }
 }
 
-
-// get all posts 
-
+// Get all blogs (with search, filter, and analytics)
 const getallblogs = async(req,res)=>{
-    const find  = await blogmodel.findOne({}, null, {sort: {createdAt: -1}});
-    if(!find){
-        return res.status(404).json({
-            message:"No blog found"
-        })
+    try {
+        const { search, tag } = req.query;
+        let query = {};
+        if (search) {
+            query.$text = { $search: search };
+        }
+        if (tag) {
+            query.tags = tag;
+        }
+        const blogs = await blogmodel.find(query).sort({createdAt: -1});
+        return res.status(200).json({
+            message:"all the posts are here",
+            blogs
+        });
+    } catch (err) {
+        return res.status(500).json({ message: "error fetching blogs", err: err.message });
     }
-
-    return res.status(200).json({
-        message:"all the posts  are here ",
-        blog:find
-    });
 }
 
-
-//get single post 
+// Get single blog (increments view count)
 const getsingleblog = async(req,res)=>{
-    const blogid = req.params.id;
-    //find the blog with the given id 
-    const find  = await blogmodel.findById(blogid);
-    if(!find){
-        return res.status(404).json({
-            message:"blog not found"
-        })
+    try {
+        const blogid = req.params.id;
+        const find  = await blogmodel.findByIdAndUpdate(
+            blogid,
+            { $inc: { views: 1 } },
+            { new: true }
+        );
+        if(!find){
+            return res.status(404).json({ message:"blog not found" });
+        }
+        return res.status(200).json({
+            message:"single blog is here",
+            blog:find
+        });
+    } catch (err) {
+        return res.status(500).json({ message: "error fetching blog", err: err.message });
     }
-
-    return res.status(200).json({
-        message:"single blog  is here ",
-        blog:find
-    });
 }
 
-
-
-
-module.exports = { addblog, updateblog,deleteblog, getallblogs,getallblogs ,getsingleblog};
+module.exports = { addblog, updateblog, deleteblog, getallblogs, getsingleblog };
