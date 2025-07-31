@@ -33,7 +33,26 @@ const signup = async (req, res) => {
       role: role && req.user && req.user.role === 'admin' ? role : 'user'
     });
     await newuser.save();
-    return res.status(200).json({ message: "user registered successfully" });
+    
+    // Generate token for immediate login
+    const secretkey = "jpsingh";
+    const token = jwt.sign(
+      { id: newuser._id, email: newuser.email },
+      secretkey,
+      { expiresIn: "1h" }
+    );
+    
+    return res.status(200).json({ 
+      message: "user registered successfully",
+      token: token,
+      user: {
+        id: newuser._id,
+        name: newuser.name,
+        email: newuser.email,
+        avatar: newuser.avatar,
+        role: newuser.role
+      }
+    });
   } catch (err) {
     return res.status(500).json({ message: "user is not created", err: err.message });
   }
@@ -71,11 +90,58 @@ const login = async (req, res) => {
     );
     return res.status(200).json({
       message: "user logged in successfully",
-      token:token
+      token: token,
+      user: {
+        id: existinguser._id,
+        name: existinguser.name,
+        email: existinguser.email,
+        avatar: existinguser.avatar,
+        role: existinguser.role
+      }
     });
   }catch(err){
     res.status(500).json({ message:"error while logging in", err:err.message });
   }
 }
 
-module.exports = { signup, login };
+// Avatar upload/update
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const userId = req.user._id;
+    const avatarPath = `/uploads/${req.file.filename}`;
+    const user = await Usermodel.findByIdAndUpdate(userId, { avatar: avatarPath }, { new: true });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ message: 'Avatar updated', avatar: user.avatar });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error updating avatar', err: err.message });
+  }
+};
+
+// Get current user data
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = await Usermodel.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'Error fetching user data', err: err.message });
+  }
+};
+
+module.exports = { signup, login, updateAvatar, getCurrentUser };

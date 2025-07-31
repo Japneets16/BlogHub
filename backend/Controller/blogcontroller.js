@@ -9,7 +9,7 @@ const addblog = async (req, res) => {
     const validate = z.object({
       title: z.string().min(1, "Title should be at least 1 character long"),
       content: z.string().min(1, "Content should be at least 1 character long"),
-      tags: z.array(z.string()).optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
     });
     const checkparse = validate.safeParse(body);
     if (!checkparse.success) {
@@ -24,11 +24,26 @@ const addblog = async (req, res) => {
     if (req.file) {
       imagePath = path.join("/uploads", req.file.filename);
     }
+    
+    // Handle tags - they might come as a JSON string from FormData
+    let processedTags = [];
+    if (tags) {
+      if (typeof tags === 'string') {
+        try {
+          processedTags = JSON.parse(tags);
+        } catch (e) {
+          processedTags = [];
+        }
+      } else if (Array.isArray(tags)) {
+        processedTags = tags;
+      }
+    }
+    
     const newblog = new blogmodel({
       title,
       content, // Markdown/HTML supported
       author: req.user._id,
-      tags: tags || [],
+      tags: processedTags,
       createdAt: new Date(),
       image: imagePath
     });
@@ -54,7 +69,7 @@ const updateblog = async (req, res) => {
     const validate = z.object({
       title: z.string().min(1, "Title should be at least 1 character long"),
       content: z.string().min(1, "Content should be at least 1 character long"),
-      tags: z.array(z.string()).optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
     });
     const checkparse = validate.safeParse(body);
     if (!checkparse.success) {
@@ -119,7 +134,9 @@ const getallblogs = async(req,res)=>{
         if (tag) {
             query.tags = tag;
         }
-        const blogs = await blogmodel.find(query).sort({createdAt: -1});
+        const blogs = await blogmodel.find(query)
+            .populate("author", "name email avatar")
+            .sort({createdAt: -1});
         return res.status(200).json({
             message:"all the posts are here",
             blogs
@@ -137,7 +154,7 @@ const getsingleblog = async(req,res)=>{
             blogid,
             { $inc: { views: 1 } },
             { new: true }
-        );
+        ).populate("author", "name email avatar");
         if(!find){
             return res.status(404).json({ message:"blog not found" });
         }
@@ -150,4 +167,20 @@ const getsingleblog = async(req,res)=>{
     }
 }
 
-module.exports = { addblog, updateblog, deleteblog, getallblogs, getsingleblog };
+// Get user's blogs
+const getuserblogs = async(req,res)=>{
+    try {
+        const userid = req.params.userid || req.user._id;
+        const blogs = await blogmodel.find({ author: userid })
+            .populate("author", "name email avatar")
+            .sort({createdAt: -1});
+        return res.status(200).json({
+            message:"user blogs fetched successfully",
+            blogs
+        });
+    } catch (err) {
+        return res.status(500).json({ message: "error fetching user blogs", err: err.message });
+    }
+}
+
+module.exports = { addblog, updateblog, deleteblog, getallblogs, getsingleblog, getuserblogs };

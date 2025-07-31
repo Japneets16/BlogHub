@@ -18,8 +18,8 @@ const upload = multer({ storage: storage });
 const { authMiddleware, requireRole } = require('../Middleware/validation');
 
 // Controllers
-const { signup, login } = require('../Controller/Authcontroller');
-const { addblog, updateblog, deleteblog, getallblogs, getsingleblog } = require('../Controller/blogcontroller');
+const { signup, login, updateAvatar, getCurrentUser } = require('../Controller/Authcontroller');
+const { addblog, updateblog, deleteblog, getallblogs, getsingleblog, getuserblogs } = require('../Controller/blogcontroller');
 const { addcomment, editcomment, deletecomment, getallcomments } = require('../Controller/commentcontroller');
 const likes = require('../Controller/likecontroller');
 const admin = require('../Controller/admincontroller');
@@ -29,12 +29,20 @@ const notification = require('../Controller/notificationcontroller');
 router.post('/signup', signup);
 router.post('/login', login);
 
+// Get current user data
+router.get('/me', authMiddleware, getCurrentUser);
+
+// Avatar upload route
+router.put('/avatar', authMiddleware, upload.single('avatar'), updateAvatar);
+
 // Blog Routes
 router.post('/addblog', authMiddleware, upload.single('image'), addblog);
 router.put('/updateblog/:id', authMiddleware, upload.single('image'), updateblog);
 router.post('/deleteblog/:id', authMiddleware, deleteblog);
 router.get('/getallblogs', getallblogs);
 router.get('/getsingleblog/:id', getsingleblog);
+router.get('/getuserblogs', authMiddleware, getuserblogs);
+router.get('/getuserblogs/:userid', getuserblogs);
 
 // Comment Routes
 router.post('/addcomment/:id', authMiddleware, addcomment);

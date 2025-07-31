@@ -20,10 +20,17 @@ const userschema  = new mongoose.Schema({
         enum: ['user', 'editor', 'admin'],
         default: 'user',
     },
+    // Avatar image path or URL
+    avatar: {
+        type: String,
+        default: ''
+    },
     // In-app notifications (simple string array for demo)
     notifications: [{
         type: String
     }]
+}, {
+    timestamps: true // This will add createdAt and updatedAt fields automatically
 });
 
 const Usermodel = mongoose.model('User',userschema);
