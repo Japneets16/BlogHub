@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MessageCircle, Share2, Calendar, Clock, User } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, Trash2, Calendar, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +11,7 @@ import { Blog, Comment, User as UserType } from '@/lib/types';
 import { blogAPI, commentAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getImageUrl } from '@/lib/utils';
 
 const BlogDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +41,7 @@ const BlogDetailPage: React.FC = () => {
         ...response.blog,
         likes: Array.isArray(response.blog.likes) ? response.blog.likes.length : (response.blog.likes || 0),
         isLiked: false, // This would be determined by checking if current user liked it
-        commentCount: 0, // This would be fetched separately
+        commentCount: response.blog.commentCount || 0, // Use the backend comment count
       };
       setBlog(transformedBlog);
     } catch (error) {
@@ -59,6 +60,11 @@ const BlogDetailPage: React.FC = () => {
     try {
       const response = await commentAPI.getComments(id!);
       setComments(response.comments || []);
+      
+      // Update blog comment count if we have it
+      if (response.comments && blog) {
+        setBlog(prev => prev ? { ...prev, commentCount: response.comments.length } : null);
+      }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     }
@@ -114,7 +120,13 @@ const BlogDetailPage: React.FC = () => {
       setSubmittingComment(true);
       await commentAPI.addComment(id!, commentContent);
       setCommentContent('');
+      
+      // Refresh comments and update comment count
       await fetchComments();
+      
+      // Update blog comment count immediately
+      setBlog(prev => prev ? { ...prev, commentCount: (prev.commentCount || 0) + 1 } : null);
+      
       toast({
         title: "Success",
         description: "Comment added successfully.",
@@ -127,6 +139,69 @@ const BlogDetailPage: React.FC = () => {
       });
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteBlog = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to delete blogs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!blog) return;
+
+    // Check if user is the author of the blog
+    if (blog.authorId !== user?.id && blog.author?._id !== user?.id) {
+      toast({
+        title: "Permission Denied",
+        description: "You can only delete your own blogs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Confirm deletion
+    if (!window.confirm("Are you sure you want to delete this blog post? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      console.log('=== DELETE BLOG DEBUG ===');
+      console.log('Blog object:', blog);
+      console.log('User object:', user);
+      console.log('Blog ID to delete:', blog.id || blog._id);
+      console.log('User ID:', user?.id);
+      console.log('Blog Author ID:', blog.authorId);
+      console.log('Blog Author Object ID:', blog.author?._id);
+      
+      const blogId = blog.id || blog._id;
+      console.log('Attempting to delete blog with ID:', blogId);
+      
+      const response = await blogAPI.deleteBlog(blogId);
+      console.log('Delete API response:', response);
+      
+      toast({
+        title: "Success",
+        description: "Blog post deleted successfully.",
+      });
+      
+      // Navigate back to homepage
+      navigate('/');
+    } catch (error) {
+      console.error('=== DELETE BLOG ERROR ===');
+      console.error('Error deleting blog:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete blog post.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -185,7 +260,7 @@ const BlogDetailPage: React.FC = () => {
           {blog.image && (
             <div className="aspect-video overflow-hidden rounded-t-lg">
               <img
-                src={blog.image}
+                src={getImageUrl(blog.image)}
                 alt={blog.title}
                 className="w-full h-full object-cover"
               />
@@ -199,16 +274,16 @@ const BlogDetailPage: React.FC = () => {
                 {blog.title}
               </h1>
               
-                             {/* Author and Meta Info */}
-               <div className="flex items-center space-x-4">
-                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={blog.author?.avatar} alt={blog.author?.name || 'Unknown'} />
-                 <AvatarFallback className="bg-primary text-primary-foreground">
-                   {(blog.author?.name || 'U').charAt(0).toUpperCase()}
-                 </AvatarFallback>
-               </Avatar>
-               <div className="flex-1">
-                 <p className="font-semibold">{blog.author?.name || 'Unknown Author'}</p>
+              {/* Author and Meta Info */}
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={blog.author?.avatar} alt={blog.author?.name || 'Unknown'} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {(blog.author?.name || 'U').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-semibold">{blog.author?.name || 'Unknown Author'}</p>
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-4 w-4" />
@@ -258,20 +333,22 @@ const BlogDetailPage: React.FC = () => {
             </Button>
             <div className="flex items-center space-x-2 text-muted-foreground">
               <MessageCircle className="h-5 w-5" />
-              <span>{comments.length} comments</span>
+              <span>{blog.commentCount || comments.length} comments</span>
             </div>
           </div>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+          {isAuthenticated && (blog.authorId === user?.id || blog.author?._id === user?.id) && (
+            <Button variant="destructive" size="sm" onClick={handleDeleteBlog}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          )}
         </div>
 
         <Separator className="my-8" />
 
         {/* Comments Section */}
         <div className="space-y-6">
-          <h3 className="text-2xl font-bold">Comments ({comments.length})</h3>
+          <h3 className="text-2xl font-bold">Comments ({blog.commentCount || comments.length})</h3>
           
           {/* Add Comment */}
           {isAuthenticated && (
@@ -280,9 +357,9 @@ const BlogDetailPage: React.FC = () => {
                 <form onSubmit={handleCommentSubmit} className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.avatar} alt={user?.username} />
+                      <AvatarImage src={user?.avatar} alt={user?.name || user?.username} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        {user?.username?.charAt(0).toUpperCase()}
+                        {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -310,23 +387,23 @@ const BlogDetailPage: React.FC = () => {
           {/* Comments List */}
           <div className="space-y-4">
             {comments.map((comment) => (
-              <Card key={comment.id}>
+              <Card key={comment.id || comment._id}>
                 <CardContent className="pt-6">
                   <div className="flex items-start space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={comment.author.avatar} alt={comment.author.username} />
+                      <AvatarImage src={comment.author?.avatar} alt={comment.author?.name || comment.author?.username} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        {comment.author.username.charAt(0).toUpperCase()}
+                        {(comment.author?.name || comment.author?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <span className="font-semibold">{comment.author.username}</span>
+                        <span className="font-semibold">{comment.author?.name || comment.author?.username || 'Unknown'}</span>
                         <span className="text-sm text-muted-foreground">
                           {formatDate(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm leading-relaxed">{comment.content}</p>
+                      <p className="text-sm leading-relaxed">{comment.comment}</p>
                     </div>
                   </div>
                 </CardContent>

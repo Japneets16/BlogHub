@@ -1,3 +1,4 @@
+// (Removed misplaced updateProfile export)
 const API_BASE = 'http://localhost:5000/user';
 
 // Auth helper to get token from localStorage
@@ -106,6 +107,13 @@ export const authAPI = {
     formData.append('avatar', avatarFile);
     return apiFormRequest('/avatar', formData, { method: 'PUT' });
   },
+
+  updateProfile: (profileData: { name?: string; email?: string }) =>
+    apiRequest('/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    }),
+
 };
 
 // Blog API calls
@@ -129,32 +137,22 @@ export const blogAPI = {
   likeBlog: (id: string) => apiRequest(`/likes/${id}`, { method: 'PUT' }),
 };
 
+
 // Comments API calls
 export const commentAPI = {
   getComments: (blogId: string) => apiRequest(`/getallcomments/${blogId}`),
-  
   addComment: (blogId: string, content: string) =>
     apiRequest(`/addcomment/${blogId}`, {
       method: 'POST',
       body: JSON.stringify({ content }),
     }),
-  
   editComment: (commentId: string, content: string) =>
     apiRequest(`/editcomment/${commentId}`, {
       method: 'PUT',
       body: JSON.stringify({ content }),
     }),
-  
   deleteComment: (commentId: string) =>
     apiRequest(`/deletecomment/${commentId}`, { method: 'DELETE' }),
-};
-
-// Notifications API calls
-export const notificationAPI = {
-  getNotifications: () => apiRequest('/notifications'),
-  
-  markAsRead: (id: string) =>
-    apiRequest(`/notifications/${id}/read`, { method: 'PUT' }),
 };
 
 // Admin API calls

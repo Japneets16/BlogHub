@@ -18,12 +18,14 @@ const upload = multer({ storage: storage });
 const { authMiddleware, requireRole } = require('../Middleware/validation');
 
 // Controllers
-const { signup, login, updateAvatar, getCurrentUser } = require('../Controller/Authcontroller');
+const { signup, login, updateAvatar, getCurrentUser, updateProfile } = require('../Controller/Authcontroller');
+// Update profile route
+router.put('/profile', authMiddleware, updateProfile);
 const { addblog, updateblog, deleteblog, getallblogs, getsingleblog, getuserblogs } = require('../Controller/blogcontroller');
 const { addcomment, editcomment, deletecomment, getallcomments } = require('../Controller/commentcontroller');
 const likes = require('../Controller/likecontroller');
 const admin = require('../Controller/admincontroller');
-const notification = require('../Controller/notificationcontroller');
+// Notification controller removed
 
 // Auth Routes
 router.post('/signup', signup);
@@ -59,8 +61,6 @@ router.put('/admin/promote/:id', authMiddleware, requireRole(['admin']), admin.p
 router.delete('/admin/user/:id', authMiddleware, requireRole(['admin']), admin.deleteUser);
 router.get('/admin/analytics', authMiddleware, requireRole(['admin']), admin.analytics);
 
-// Notification Routes
-router.get('/notifications', authMiddleware, notification.getNotifications);
-router.put('/notifications/:id/read', authMiddleware, notification.markAsRead);
+// Notification routes removed
 
 module.exports = router;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, Clock, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,12 +9,15 @@ import BlogCard from '@/components/blog/BlogCard';
 import { Blog } from '@/lib/types';
 import { blogAPI } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HomePage: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBlogs();
@@ -23,13 +27,15 @@ const HomePage: React.FC = () => {
     try {
       setLoading(true);
       const response = await blogAPI.getAllBlogs();
+      
       // Transform the data to match frontend expectations
       const transformedBlogs = (response.blogs || []).map((blog: any) => ({
         ...blog,
         likes: Array.isArray(blog.likes) ? blog.likes.length : (blog.likes || 0),
         isLiked: false, // This would be determined by checking if current user liked it
-        commentCount: 0, // This would be fetched separately
+        commentCount: blog.commentCount || 0, // Use backend comment count
       }));
+      
       setBlogs(transformedBlogs);
     } catch (error) {
       toast({
@@ -46,7 +52,7 @@ const HomePage: React.FC = () => {
     try {
       await blogAPI.likeBlog(blogId);
       setBlogs(prev => prev.map(blog => 
-        blog._id === blogId || blog.id === blogId
+        (blog._id === blogId || blog.id === blogId)
           ? { 
               ...blog, 
               likes: blog.isLiked ? blog.likes - 1 : blog.likes + 1,
@@ -63,10 +69,18 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const handleWriteStory = () => {
+    if (isAuthenticated) {
+      navigate('/create-blog');
+    } else {
+      navigate('/login');
+    }
+  };
+
   const filteredBlogs = blogs.filter(blog =>
     blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     blog.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    blog.author.username.toLowerCase().includes(searchQuery.toLowerCase())
+    (blog.author?.name || blog.author?.username || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const trendingBlogs = [...blogs].sort((a, b) => b.likes - a.likes).slice(0, 6);
@@ -97,7 +111,6 @@ const HomePage: React.FC = () => {
             Join our community of writers and readers. Share your thoughts, discover new perspectives, 
             and engage with stories that matter.
           </p>
-          
           {/* Hero Search */}
           <div className="relative max-w-md mx-auto mb-8">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -109,12 +122,13 @@ const HomePage: React.FC = () => {
               className="blog-input pl-12 h-12 text-base"
             />
           </div>
-          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="blog" size="blog-hero">
-              Start Reading
-            </Button>
-            <Button variant="blog-outline" size="blog-hero">
+            {!isAuthenticated && (
+              <Button variant="blog" size="blog-hero">
+                Start Reading
+              </Button>
+            )}
+            <Button variant="blog-outline" size="blog-hero" onClick={handleWriteStory}>
               Write Your Story
             </Button>
           </div>
@@ -126,7 +140,7 @@ const HomePage: React.FC = () => {
         <div className="container max-w-7xl mx-auto px-4">
           <Tabs defaultValue="recent" className="w-full">
             <div className="flex items-center justify-between mb-8">
-              <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="recent" className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Recent
@@ -134,10 +148,6 @@ const HomePage: React.FC = () => {
                 <TabsTrigger value="trending" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Trending
-                </TabsTrigger>
-                <TabsTrigger value="featured" className="flex items-center gap-2">
-                  <Star className="h-4 w-4" />
-                  Featured
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -148,11 +158,9 @@ const HomePage: React.FC = () => {
                   <BlogCard
                     key={blog.id}
                     blog={blog}
-                    onLike={handleLike}
                   />
                 ))}
               </div>
-              
               {(searchQuery ? filteredBlogs : recentBlogs).length === 0 && (
                 <Card className="text-center py-12">
                   <CardContent>
@@ -170,23 +178,9 @@ const HomePage: React.FC = () => {
                   <BlogCard
                     key={blog.id}
                     blog={blog}
-                    onLike={handleLike}
                   />
                 ))}
               </div>
-            </TabsContent>
-
-            <TabsContent value="featured" className="space-y-8">
-              <Card className="text-center py-12">
-                <CardHeader>
-                  <CardTitle>Featured Content</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Featured content will be curated by our editorial team.
-                  </p>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </div>

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Blog } from '@/lib/types';
+import { getImageUrl } from '@/lib/utils';
 
 interface BlogCardProps {
   blog: Blog;
@@ -40,13 +41,12 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onLike }) => {
         {blog.image && (
           <div className="aspect-video overflow-hidden">
             <img
-              src={blog.image}
+              src={getImageUrl(blog.image)}
               alt={blog.title}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         )}
-        
         <CardContent className="p-6">
           {/* Author Info */}
           <div className="flex items-center space-x-3 mb-4">
@@ -110,17 +110,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onLike }) => {
                 <span>{blog.commentCount || 0}</span>
               </div>
             </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              className={`transition-colors ${
-                blog.isLiked ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${blog.isLiked ? 'fill-current' : ''}`} />
-            </Button>
+            {/* Like button removed as per request */}
           </div>
         </CardContent>
       </Card>

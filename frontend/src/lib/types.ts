@@ -11,7 +11,8 @@ export interface User {
 
 // Blog types
 export interface Blog {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   content: string;
   excerpt?: string;
@@ -39,16 +40,7 @@ export interface Comment {
   isHidden?: boolean;
 }
 
-// Notification types
-export interface Notification {
-  id: string;
-  type: 'like' | 'comment' | 'follow' | 'mention';
-  title: string;
-  message: string;
-  isRead: boolean;
-  userId: string;
-  createdAt: string;
-  relatedId?: string; // blog id, comment id, etc.
+// Notification type removed
 }
 
 // Auth types

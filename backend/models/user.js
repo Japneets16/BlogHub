@@ -25,10 +25,7 @@ const userschema  = new mongoose.Schema({
         type: String,
         default: ''
     },
-    // In-app notifications (simple string array for demo)
-    notifications: [{
-        type: String
-    }]
+    // Notifications removed
 }, {
     timestamps: true // This will add createdAt and updatedAt fields automatically
 });

@@ -22,7 +22,8 @@ const addblog = async (req, res) => {
     // Handle image upload (if any)
     let imagePath = null;
     if (req.file) {
-      imagePath = path.join("/uploads", req.file.filename);
+      // Ensure forward slashes for URL compatibility across all operating systems
+      imagePath = `/uploads/${req.file.filename}`;
     }
     
     // Handle tags - they might come as a JSON string from FormData
@@ -48,7 +49,7 @@ const addblog = async (req, res) => {
       image: imagePath
     });
     await newblog.save();
-    await newblog.populate("author", "name");
+    await newblog.populate("author", "name _id");
     return res.status(200).json({
       message: "blog added successfully",
       blog: newblog,
@@ -81,7 +82,8 @@ const updateblog = async (req, res) => {
     const { title, content, tags } = checkparse.data;
     let updateData = { title, content, tags };
     if (req.file) {
-      updateData.image = path.join("/uploads", req.file.filename);
+      // Ensure forward slashes for URL compatibility across all operating systems
+      updateData.image = `/uploads/${req.file.filename}`;
     }
     const find = await blogmodel.findByIdAndUpdate(
         blogid,
@@ -91,7 +93,7 @@ const updateblog = async (req, res) => {
     if (!find) {
       return res.status(404).json({ message: "Blog not found" });
     }
-    await find.populate("author", "name");
+    await find.populate("author", "name _id");
     return res.status(200).json({
       message: "Blog updated successfully",
       blog: find
@@ -135,7 +137,7 @@ const getallblogs = async(req,res)=>{
             query.tags = tag;
         }
         const blogs = await blogmodel.find(query)
-            .populate("author", "name email avatar")
+            .populate("author", "name email avatar _id")
             .sort({createdAt: -1});
         return res.status(200).json({
             message:"all the posts are here",
@@ -154,7 +156,7 @@ const getsingleblog = async(req,res)=>{
             blogid,
             { $inc: { views: 1 } },
             { new: true }
-        ).populate("author", "name email avatar");
+        ).populate("author", "name email avatar _id");
         if(!find){
             return res.status(404).json({ message:"blog not found" });
         }
@@ -172,7 +174,7 @@ const getuserblogs = async(req,res)=>{
     try {
         const userid = req.params.userid || req.user._id;
         const blogs = await blogmodel.find({ author: userid })
-            .populate("author", "name email avatar")
+            .populate("author", "name email avatar _id")
             .sort({createdAt: -1});
         return res.status(200).json({
             message:"user blogs fetched successfully",

@@ -37,6 +37,11 @@ const blogSchema = new mongoose.Schema({
     ref: "User",
     default: [],
   },
+  // Comment count for performance
+  commentCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // Full-text search index

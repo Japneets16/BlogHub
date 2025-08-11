@@ -2,7 +2,7 @@
 
 # 📝 BlogHub (Blogging Website)
 
-This is the backend for a blogging website, built with **Node.js**, **Express**, and **MongoDB**. It provides RESTful APIs for user authentication, blog management, comments, likes, notifications, and admin analytics.
+This is the backend for a blogging website, built with **Node.js**, **Express**, and **MongoDB**. It provides RESTful APIs for user authentication, blog management, comments, likes, and admin analytics.
 
 ---
 
@@ -10,9 +10,9 @@ This is the backend for a blogging website, built with **Node.js**, **Express**,
 
 - 🔐 **User Authentication:** Signup, login (JWT-based), and avatar upload.
 - ✍️ **Blog Management:** Create, update, delete, and fetch blogs. Supports image uploads and tags.
-- 💬 **Comments:** Add, edit, delete/hide, and fetch nested comments. In-app notifications for new comments.
+- 💬 **Comments:** Add, edit, delete/hide, and fetch nested comments.
 - ❤️ **Likes:** Like/unlike blogs.
-- 🔔 **Notifications:** In-app alerts for user interactions (e.g., new comments).
+
 - 🛠️ **Admin Panel:** List, promote, or delete users. View analytics (user/blog/comment counts).
 - 🧑‍⚖️ **Role-based Access:** Admin-only routes for user management and analytics.
 - 📁 **File Uploads:** Uses Multer for uploading blog images and avatars.
@@ -69,7 +69,7 @@ This is the backend for a blogging website, built with **Node.js**, **Express**,
 
 ## 📁 Folder Structure
 
-* `Controller/` - Route handlers for auth, blogs, comments, likes, admin, notifications.
+* `Controller/` - Route handlers for auth, blogs, comments, likes, admin.
 * `models/` - Mongoose models & DB connection logic.
 * `Middleware/` - Auth and validation logic.
 * `routes/` - Defines all API endpoints.
@@ -111,10 +111,7 @@ This is the backend for a blogging website, built with **Node.js**, **Express**,
 * `DELETE /user/admin/user/:id` - Delete a user (admin only)
 * `GET /user/admin/analytics` - Get analytics (user, blog, comment counts) (admin only)
 
-### 🔔 Notifications
 
-* `GET /user/notifications` - Get notifications for logged-in user
-* `PUT /user/notifications/:id/read` - Mark notification as read
 
 ---
 
@@ -128,14 +125,14 @@ backend/
 │ ├── blogcontroller.js
 │ ├── commentcontroller.js
 │ ├── likecontroller.js
-│ └── notificationcontroller.js
+
 ├── Middleware/
 │ └── validation.js
 ├── models/
 │ ├── blog.js
 │ ├── comment.js
 │ ├── db.js
-│ ├── notification.js
+
 │ └── user.js
 ├── routes/
 │ └── authrouter.js

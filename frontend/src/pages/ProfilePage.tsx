@@ -86,14 +86,27 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    // In a real app, you'd make an API call to update user profile
-    updateUser(formData);
-    setIsEditing(false);
-    toast({
-      title: "Success",
-      description: "Profile updated successfully.",
-    });
+  const handleSaveProfile = async () => {
+    try {
+      // Persist changes to backend
+      await authAPI.updateProfile({
+        name: formData.username,
+        email: formData.email,
+      });
+      // Update local user context
+      updateUser({ ...user, name: formData.username, email: formData.email });
+      setIsEditing(false);
+      toast({
+        title: "Success",
+        description: "Profile updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLike = async (blogId: string) => {
@@ -121,19 +134,13 @@ const ProfilePage: React.FC = () => {
     return null;
   }
 
-  return (
+return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-6xl mx-auto px-4 py-8">
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Profile</h1>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/create-blog')}
-          >
-            <Edit3 className="h-4 w-4 mr-2" />
-            Write New Post
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -143,23 +150,15 @@ const ProfilePage: React.FC = () => {
               <CardHeader className="text-center">
                 <div className="relative inline-block">
                   <Avatar className="h-24 w-24 mx-auto mb-4">
-                                         <AvatarImage 
-                       src={avatarPreview || user?.avatar} 
-                       alt={user?.name || user?.username} 
-                     />
-                     <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                       {(user?.name || user?.username)?.charAt(0).toUpperCase()}
-                     </AvatarFallback>
-                   </Avatar>
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     className="absolute bottom-0 right-0 rounded-full p-2"
-                     onClick={() => document.getElementById('avatar-upload')?.click()}
-                   >
-                     <Camera className="h-4 w-4" />
-                   </Button>
-                 </div>
+                    <AvatarImage 
+                      src={avatarPreview || user?.avatar} 
+                      alt={user?.name || user?.username} 
+                    />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                      {(user?.name || user?.username)?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
                  <input
                    id="avatar-upload"
                    type="file"
@@ -198,12 +197,7 @@ const ProfilePage: React.FC = () => {
               </CardHeader>
               
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Member since</span>
-                  <span className="text-sm font-medium">
-                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                  </span>
-                </div>
+                {/* Member since removed */}
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Posts</span>
@@ -272,10 +266,8 @@ const ProfilePage: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="posts" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-1">
                 <TabsTrigger value="posts">Posts</TabsTrigger>
-                <TabsTrigger value="drafts">Drafts</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
               <TabsContent value="posts" className="space-y-6">
@@ -317,47 +309,6 @@ const ProfilePage: React.FC = () => {
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
-
-              <TabsContent value="drafts" className="space-y-6">
-                <h2 className="text-2xl font-bold">Drafts</h2>
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      Draft functionality will be implemented soon.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="settings" className="space-y-6">
-                <h2 className="text-2xl font-bold">Account Settings</h2>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Account Settings</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Manage your account preferences and settings.
-                        </p>
-                      </div>
-                      <Separator />
-                      <div className="space-y-2">
-                        <Label>Privacy</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Control your privacy settings and data sharing preferences.
-                        </p>
-                      </div>
-                      <Separator />
-                      <div className="space-y-2">
-                        <Label>Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Configure your notification preferences.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </TabsContent>
             </Tabs>
           </div>
