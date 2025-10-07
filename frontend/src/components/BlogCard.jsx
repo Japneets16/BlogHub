@@ -11,6 +11,8 @@ function formatDate(value) {
 function BlogCard({ blog }) {
   const imageUrl = blog.image ? `${API_BASE_URL}${blog.image}` : null;
   const likeCount = Array.isArray(blog.likes) ? blog.likes.length : 0;
+  const contentPreview = (blog.content ?? "").slice(0, 140);
+  const needsEllipsis = (blog.content ?? "").length > 140;
 
   return (
     <article className="blog-card">
@@ -25,7 +27,7 @@ function BlogCard({ blog }) {
           <span className="blog-date">{formatDate(blog.createdAt)}</span>
         </div>
         <Link to={`/blog/${blog._id}`} className="blog-card-title">{blog.title}</Link>
-        <p className="blog-card-content">{blog.content.slice(0, 140)}{blog.content.length > 140 ? "..." : ""}</p>
+        <p className="blog-card-content">{contentPreview}{needsEllipsis ? "..." : ""}</p>
         <div className="blog-card-footer">
           <div className="tag-list">
             {(blog.tags ?? []).map((tag) => (
