@@ -85,7 +85,7 @@ function BlogDetail() {
 
   const imageUrl = blog.image ? `${API_BASE_URL}${blog.image}` : null;
   const likeCount = Array.isArray(blog.likes) ? blog.likes.length : 0;
-  const hasLiked = token && Array.isArray(blog.likes) && blog.likes.includes(user?.id ?? user?._id);
+  const hasLiked = token && Array.isArray(blog.likes) && blog.likes.some((value) => String(value) === String(user?.id ?? user?._id));
 
   return (
     <article className="page-section">
