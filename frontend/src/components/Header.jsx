@@ -18,6 +18,7 @@ function Header() {
       <nav className="primary-navigation">
         <NavLink to="/" className="nav-item">Home</NavLink>
         {user && <NavLink to="/create" className="nav-item">Write</NavLink>}
+        {user && <NavLink to="/my-blogs" className="nav-item">My Blogs</NavLink>}
         {user && <NavLink to="/profile" className="nav-item">Profile</NavLink>}
       </nav>
       <div className="account-actions">

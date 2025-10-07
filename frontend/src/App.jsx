@@ -6,7 +6,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import BlogDetail from "./pages/BlogDetail";
 import CreateBlog from "./pages/CreateBlog";
+import EditBlog from "./pages/EditBlog";
 import Profile from "./pages/Profile";
+import UserBlogDashboard from "./pages/UserBlogDashboard";
 import "./App.css";
 
 function App() {
@@ -32,6 +34,22 @@ function App() {
             element={(
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/my-blogs"
+            element={(
+              <ProtectedRoute>
+                <UserBlogDashboard />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/edit-blog/:id"
+            element={(
+              <ProtectedRoute>
+                <EditBlog />
               </ProtectedRoute>
             )}
           />

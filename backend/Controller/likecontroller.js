@@ -8,7 +8,7 @@ const likes = async (req, res) => {
 
     // user id is also reqd to check that which user liked the post*
 
-    const userid = req.user.id;
+    const userid = req.user._id;
 
     const blog = await blogmodel.findById(blogid);
 

@@ -127,7 +127,7 @@ function BlogDetail() {
         ))}
       </section>
       {statusMessage && <p className="muted-text">{statusMessage}</p>}
-      <CommentSection comments={comments} onAdd={handleAddComment} />
+      <CommentSection comments={comments} onAdd={handleAddComment} onRefresh={loadComments} />
     </article>
   );
 }
