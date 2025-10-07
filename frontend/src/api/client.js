@@ -1,4 +1,17 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+const API_BASE_URL = (() => {
+  const configured = import.meta.env.VITE_API_BASE_URL;
+  if (configured && configured.trim().length > 0) {
+    return configured;
+  }
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:5000";
+    }
+    return ""; // use same-origin when not on localhost
+  }
+  return "http://localhost:5000";
+})();
 
 function buildHeaders(token, body, extraHeaders = {}) {
   const headers = new Headers(extraHeaders);
