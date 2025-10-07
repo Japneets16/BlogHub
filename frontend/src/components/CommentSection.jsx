@@ -24,17 +24,22 @@ function CommentItem({ comment, level = 0 }) {
 function CommentSection({ comments, onAdd }) {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const { user } = useAuth();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!message.trim()) {
+      setFormError("Comment cannot be empty.");
       return;
     }
     try {
       setIsSubmitting(true);
+      setFormError("");
       await onAdd(message.trim());
       setMessage("");
+    } catch (submitError) {
+      setFormError(submitError.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -54,6 +59,7 @@ function CommentSection({ comments, onAdd }) {
             onChange={(event) => setMessage(event.target.value)}
             rows={4}
           />
+          {formError && <p className="error-text">{formError}</p>}
           <button type="submit" className="solid-button" disabled={isSubmitting}>
             {isSubmitting ? "Posting..." : "Post Comment"}
           </button>
