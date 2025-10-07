@@ -12,7 +12,11 @@ app.use(cors());
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// route 
+app.get("/", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
+// route
 app.use("/user", router);
 
 app.listen("5000",()=>{
