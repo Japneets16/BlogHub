@@ -63,16 +63,24 @@ function BlogDetail() {
 
   const handleAddComment = async (content) => {
     if (!token) {
-      setStatusMessage("Login to comment.");
-      return;
+      const message = "Login to comment.";
+      setStatusMessage(message);
+      throw new Error(message);
     }
-    await request(`/user/addcomment/${id}`, {
-      method: "POST",
-      body: { content },
-      token,
-    });
-    await loadComments();
-    await loadBlog();
+    try {
+      setStatusMessage("");
+      await request(`/user/addcomment/${id}`, {
+        method: "POST",
+        body: { content },
+        token,
+      });
+      await loadComments();
+      await loadBlog();
+    } catch (commentError) {
+      const message = commentError.message ?? "Unable to add comment.";
+      setStatusMessage(message);
+      throw new Error(message);
+    }
   };
 
   if (loading) {
