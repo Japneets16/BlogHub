@@ -114,7 +114,7 @@ function BlogDetail() {
         </div>
       )}
       <section className="article-content">
-        {blog.content.split(/\n{2,}/).map((paragraph, index) => (
+        {(blog.content ?? "").split(/\n{2,}/).filter(Boolean).map((paragraph, index) => (
           <p key={index} className="article-paragraph">{paragraph}</p>
         ))}
       </section>
