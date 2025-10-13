@@ -1,206 +1,197 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { request } from "../api/client";
 
-function CommentItem({ comment, level = 0, onEdit, onDelete }) {
-  const { user, token } = useAuth();
+function formatDate(value) {
+  if (!value) {
+    return "";
+  }
+  return new Date(value).toLocaleDateString();
+}
+
+// Individual comment component to handle nested comments
+function CommentItem({ comment, onEdit, onDelete, currentUserId }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(comment.comment);
+  const [editContent, setEditContent] = useState(comment.comment || comment.content || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
-  const indentClass = level > 0 ? "nested-comment" : "";
-  const isOwner = user && comment.author && (comment.author._id === user.id || comment.author._id === user._id);
+  const isAuthor = currentUserId && comment.author && 
+    (comment.author._id === currentUserId || comment.author.id === currentUserId);
 
   const handleEdit = async () => {
-    if (!editText.trim()) {
-      setError("Comment cannot be empty.");
-      return;
-    }
-
+    if (!editContent.trim()) return;
+    
     try {
       setIsSubmitting(true);
-      setError("");
-      await request(`/user/editcomment/${comment._id}`, {
-        method: "PUT",
-        body: { content: editText.trim() },
-        token,
-      });
+      await onEdit(comment._id, editContent.trim());
       setIsEditing(false);
-      onEdit && onEdit();
-    } catch (editError) {
-      setError(editError.message);
+    } catch (error) {
+      console.error("Error editing comment:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await request(`/user/deletecomment/${comment._id}`, {
-        method: "DELETE",
-        token,
-      });
-      onDelete && onDelete();
-    } catch (deleteError) {
-      setError(deleteError.message);
-    } finally {
-      setIsSubmitting(false);
+    if (window.confirm("Are you sure you want to delete this comment?")) {
+      try {
+        await onDelete(comment._id);
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+      }
     }
   };
 
   return (
-    <li className={`comment-item ${indentClass}`}>
-      <div className="comment-header">
-        <span className="comment-author">{comment.author?.name ?? "Anonymous"}</span>
-        <span className="comment-date">{new Date(comment.createdAt).toLocaleString()}</span>
-        {isOwner && (
-          <div className="comment-actions">
+    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-slate-900">
+            {comment.author?.name || comment.author?.username || "Anonymous"}
+          </span>
+          <span className="text-sm text-slate-500">
+            {formatDate(comment.createdAt)}
+          </span>
+        </div>
+        {isAuthor && (
+          <div className="flex gap-2">
             <button
-              type="button"
-              className="comment-action-btn"
               onClick={() => setIsEditing(!isEditing)}
-              disabled={isSubmitting}
+              className="text-xs px-2 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"
             >
               {isEditing ? "Cancel" : "Edit"}
             </button>
             <button
-              type="button"
-              className="comment-action-btn danger"
               onClick={handleDelete}
-              disabled={isSubmitting}
+              className="text-xs px-2 py-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
             >
-              {isSubmitting ? "Deleting..." : "Delete"}
+              Delete
             </button>
           </div>
         )}
       </div>
       
       {isEditing ? (
-        <div className="comment-edit-form">
+        <div className="space-y-2">
           <textarea
-            className="text-field"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            rows={3}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none text-slate-900"
+            rows="3"
           />
-          {error && <p className="error-text">{error}</p>}
-          <div className="comment-edit-actions">
+          <div className="flex gap-2">
             <button
-              type="button"
-              className="outline-button"
-              onClick={() => {
-                setIsEditing(false);
-                setEditText(comment.comment);
-                setError("");
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="solid-button"
               onClick={handleEdit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !editContent.trim()}
+              className="px-3 py-1 bg-slate-900 text-white text-sm rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setEditContent(comment.comment || comment.content || "");
+              }}
+              className="px-3 py-1 bg-slate-200 text-slate-700 text-sm rounded hover:bg-slate-300"
+            >
+              Cancel
             </button>
           </div>
         </div>
       ) : (
-        <p className="comment-text">{comment.comment}</p>
+        <p className="text-slate-700 leading-relaxed">{comment.comment || comment.content}</p>
       )}
       
-      {Array.isArray(comment.replies) && comment.replies.length > 0 && (
-        <ul className="comment-list">
+      {/* Render nested replies if they exist */}
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-4 ml-4 space-y-3 border-l-2 border-slate-200 pl-4">
           {comment.replies.map((reply) => (
             <CommentItem 
               key={reply._id} 
               comment={reply} 
-              level={level + 1} 
               onEdit={onEdit}
               onDelete={onDelete}
+              currentUserId={currentUserId}
             />
           ))}
-        </ul>
+        </div>
       )}
-    </li>
+    </div>
   );
 }
 
-function CommentSection({ comments, onAdd, onRefresh }) {
-  const [message, setMessage] = useState("");
+function CommentSection({ comments = [], onAdd, onEdit, onDelete, onRefresh }) {
+  const { token, user } = useAuth();
+  const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState("");
-  const { user } = useAuth();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!message.trim()) {
-      setFormError("Comment cannot be empty.");
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    
     try {
       setIsSubmitting(true);
-      setFormError("");
-      await onAdd(message.trim());
-      setMessage("");
-    } catch (submitError) {
-      setFormError(submitError.message);
+      await onAdd(newComment.trim());
+      setNewComment("");
+    } catch (error) {
+      // Error handling is done in parent component
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCommentEdit = () => {
-    onRefresh && onRefresh();
-  };
-
-  const handleCommentDelete = () => {
-    onRefresh && onRefresh();
-  };
-
   return (
-    <section className="comment-section">
-      <h3 className="section-title">Comments</h3>
-      {user ? (
-        <form className="comment-form" onSubmit={handleSubmit}>
-          <label className="field-label" htmlFor="comment-message">Share your thoughts</label>
-          <textarea
-            id="comment-message"
-            className="text-field"
-            placeholder="Write a comment"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            rows={4}
-          />
-          {formError && <p className="error-text">{formError}</p>}
-          <button type="submit" className="solid-button" disabled={isSubmitting}>
-            {isSubmitting ? "Posting..." : "Post Comment"}
-          </button>
+    <section className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+      <h2 className="text-2xl font-bold text-slate-900 mb-6">Comments ({comments.length})</h2>
+      
+      {token ? (
+        <form onSubmit={handleSubmit} className="mb-8">
+          <div className="space-y-4">
+            <label htmlFor="comment" className="block text-sm font-semibold text-slate-700">
+              Add a comment
+            </label>
+            <textarea
+              id="comment"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Share your thoughts..."
+              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all duration-200 text-slate-900 placeholder-slate-400 resize-none"
+              rows="4"
+              required
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting || !newComment.trim()}
+              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+            >
+              {isSubmitting ? "Posting..." : "Post Comment"}
+            </button>
+          </div>
         </form>
       ) : (
-        <p className="muted-text">Login to join the discussion.</p>
+        <div className="mb-8 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+          <p className="text-slate-600 text-center">
+            <a href="/login" className="text-slate-900 font-semibold hover:underline">Login</a> to post comments
+          </p>
+        </div>
       )}
-      {comments.length === 0 ? (
-        <p className="muted-text">No comments yet.</p>
-      ) : (
-        <ul className="comment-list">
-          {comments.map((comment) => (
+
+      <div className="space-y-4">
+        {comments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-slate-500 text-lg">No comments yet. Be the first to comment!</p>
+          </div>
+        ) : (
+          comments.map((comment) => (
             <CommentItem 
               key={comment._id} 
               comment={comment} 
-              onEdit={handleCommentEdit}
-              onDelete={handleCommentDelete}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              currentUserId={user?.id || user?._id}
             />
-          ))}
-        </ul>
-      )}
+          ))
+        )}
+      </div>
     </section>
   );
 }

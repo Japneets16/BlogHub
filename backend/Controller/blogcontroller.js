@@ -31,9 +31,12 @@ const addblog = async (req, res) => {
     if (tags) {
       if (typeof tags === 'string') {
         try {
-          processedTags = JSON.parse(tags);
+          const parsed = JSON.parse(tags);
+          // If it's an array, use it; if it's a single string, wrap it in array
+          processedTags = Array.isArray(parsed) ? parsed : [parsed];
         } catch (e) {
-          processedTags = [];
+          // If JSON parsing fails, treat as comma-separated string
+          processedTags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
         }
       } else if (Array.isArray(tags)) {
         processedTags = tags;
@@ -80,7 +83,23 @@ const updateblog = async (req, res) => {
       });
     }
     const { title, content, tags } = checkparse.data;
-    let updateData = { title, content, tags };
+    
+    // Handle tags processing for update
+    let processedTags = [];
+    if (tags) {
+      if (typeof tags === 'string') {
+        try {
+          const parsed = JSON.parse(tags);
+          processedTags = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+          processedTags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        }
+      } else if (Array.isArray(tags)) {
+        processedTags = tags;
+      }
+    }
+    
+    let updateData = { title, content, tags: processedTags };
     if (req.file) {
       // Ensure forward slashes for URL compatibility across all operating systems
       updateData.image = `/uploads/${req.file.filename}`;
@@ -123,7 +142,7 @@ const deleteblog= async(req,res)=>{
     }catch(err){
         res.status(500).json({ message:"Error while deleting blog", err:err.message });
     }
-}
+};
 
 // Get all blogs (with search, filter, and analytics)
 const getallblogs = async(req,res)=>{

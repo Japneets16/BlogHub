@@ -112,7 +112,7 @@ const deletecomment= async(req,res)=>{
 }
 
 // Get all comments for a blog (nested)
-const getallcomments  = async(req,res)=>{
+const getallcomments = async(req,res) => {
     try{
         const blogid= req.params.id;
         const findblog = await blogmodel.findById(blogid);

@@ -40,47 +40,49 @@ function Home() {
   };
 
   return (
-    <section className="page-section">
-      <div className="section-header">
-        <div>
-          <h1 className="page-title">Discover Blogs</h1>
-          <p className="muted-text">Read fresh perspectives from the community.</p>
+    <section className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-10 space-y-6">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Discover Blogs</h1>
+            <p className="text-slate-600 text-lg">Read fresh perspectives from the community.</p>
+          </div>
+          <form className="bg-white rounded-xl shadow-lg p-6 flex flex-col sm:flex-row gap-4 items-end" onSubmit={handleSearch}>
+            <div className="flex-1 space-y-2">
+              <label className="block text-sm font-semibold text-slate-700" htmlFor="search-term">Search</label>
+              <input
+                id="search-term"
+                type="text"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-200 outline-none"
+                placeholder="Search by title or content"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <label className="block text-sm font-semibold text-slate-700" htmlFor="tag-filter">Tag</label>
+              <input
+                id="tag-filter"
+                type="text"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all duration-200 outline-none"
+                placeholder="Filter by tag"
+                value={tagFilter}
+                onChange={(event) => setTagFilter(event.target.value)}
+              />
+            </div>
+            <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 whitespace-nowrap">Apply</button>
+          </form>
         </div>
-        <form className="filter-form" onSubmit={handleSearch}>
-          <div className="field-group">
-            <label className="field-label" htmlFor="search-term">Search</label>
-            <input
-              id="search-term"
-              type="text"
-              className="text-field"
-              placeholder="Search by title or content"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </div>
-          <div className="field-group">
-            <label className="field-label" htmlFor="tag-filter">Tag</label>
-            <input
-              id="tag-filter"
-              type="text"
-              className="text-field"
-              placeholder="Filter by tag"
-              value={tagFilter}
-              onChange={(event) => setTagFilter(event.target.value)}
-            />
-          </div>
-          <button type="submit" className="solid-button">Apply</button>
-        </form>
-      </div>
-      {loading && <p className="muted-text">Loading blogs...</p>}
-      {error && <p className="error-text">{error}</p>}
-      {!loading && !error && blogs.length === 0 && (
-        <p className="muted-text">No blogs found.</p>
-      )}
-      <div className="blog-grid">
-        {blogs.map((blog) => (
-          <BlogCard key={blog._id} blog={blog} />
-        ))}
+        {loading && <p className="text-slate-600 text-center py-8">Loading blogs...</p>}
+        {error && <p className="text-red-600 text-center py-8 bg-red-50 rounded-lg font-medium">{error}</p>}
+        {!loading && !error && blogs.length === 0 && (
+          <p className="text-slate-600 text-center py-8">No blogs found.</p>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogs.map((blog) => (
+            <BlogCard key={blog._id} blog={blog} />
+          ))}
+        </div>
       </div>
     </section>
   );
