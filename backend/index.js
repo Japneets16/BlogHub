@@ -18,7 +18,7 @@ app.use(cors({
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5174",
-    // "https://your-frontend.vercel.app" // ⚠️ Replace with your actual Vercel frontend URL after deployment
+    "https://blog-hub-nu.vercel.app/" // ⚠️ Replace with your actual Vercel frontend URL after deployment
   ],
   credentials: true
 }));
