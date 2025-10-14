@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 
-dotenv.config();
+mongoose.connect("mongodb+srv://jpsingh:jpsingh3205@cluster1.lcrcel4.mongodb.net/")
 
-const MONGO_URI = process.env.MONGO_URI;
+.then(()=>{ 
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log("✅ Connected to MongoDB Atlas");
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection failed:", err.message);
-  });
+console.log("conneted to the db");
+
+}).catch((err)=>{
+
+console.log("no connection",err);
+
+})
